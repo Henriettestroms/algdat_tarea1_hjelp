@@ -27,7 +27,7 @@ namespace {
     }
 }
 
-std::vector<int> sortArray(std::vector<int> arr) {
+std::vector<int> sortArray(std::vector<int>& arr) {
     if (!arr.empty()) {
         std::mt19937 rng(std::random_device{}());
         std::shuffle(arr.begin(), arr.end(), rng);

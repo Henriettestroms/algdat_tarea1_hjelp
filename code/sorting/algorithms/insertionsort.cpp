@@ -1,6 +1,6 @@
 #include <vector>
 
-std::vector<int> sortArray(std::vector<int>arr){
+std::vector<int> sortArray(std::vector<int>&arr){
     for (std::size_t i = 1; i< arr.size(); i++)
     {
         int key=arr[i];

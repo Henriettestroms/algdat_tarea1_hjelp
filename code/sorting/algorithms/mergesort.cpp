@@ -21,7 +21,7 @@ namespace {
     }
 }
 
-std::vector<int> sortArray(std::vector<int> arr) {
+std::vector<int> sortArray(std::vector<int>& arr) {
     std::vector<int> tmp(arr.size());
     mergesort(arr, tmp, 0, arr.size());
     return arr;
