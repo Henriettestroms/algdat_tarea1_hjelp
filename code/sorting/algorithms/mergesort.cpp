@@ -1,28 +1,32 @@
 #include <vector>
+using std::vector;
 
-namespace {
-    void merge(std::vector<int>& arr, std::vector<int>& tmp, std::size_t l, std::size_t m, std::size_t r) {
-        std::size_t i = l, j = m, k = l;
-        while (i < m && j < r) {
-            if (arr[i] <= arr[j]) tmp[k++] = arr[i++];
-            else tmp[k++] = arr[j++];
-        }
-        while (i < m) tmp[k++] = arr[i++];
-        while (j < r) tmp[k++] = arr[j++];
-        for (std::size_t t = l; t < r; ++t) arr[t] = tmp[t];
-    }
+static void merge(vector<int>& A, int p, int q, int r) {
+    int nL = q - p + 1;
+    int nR = r - q;
+    vector<int> L(nL), R(nR);
+    for (int i = 0; i < nL; ++i) L[i] = A[p + i];
+    for (int j = 0; j < nR; ++j) R[j] = A[q + 1 + j];
 
-    void mergesort(std::vector<int>& arr, std::vector<int>& tmp, std::size_t l, std::size_t r) {
-        if (r - l <= 1) return;
-        std::size_t m = l + (r - l) / 2;
-        mergesort(arr, tmp, l, m);
-        mergesort(arr, tmp, m, r);
-        merge(arr, tmp, l, m, r);
+    int i = 0, j = 0, k = p;
+    while (i < nL && j < nR) {
+        if (L[i] <= R[j]) A[k++] = L[i++];
+        else              A[k++] = R[j++];
     }
+    while (i < nL) A[k++] = L[i++];
+    while (j < nR) A[k++] = R[j++];
 }
 
-std::vector<int> sortArray(std::vector<int>& arr) {
-    std::vector<int> tmp(arr.size());
-    mergesort(arr, tmp, 0, arr.size());
-    return arr;
+static void mergeSortRec(vector<int>& A, int p, int r) {
+    if (p >= r) return;
+    int q = p + (r - p) / 2;
+    mergeSortRec(A, p, q);
+    mergeSortRec(A, q + 1, r);
+    merge(A, p, q, r);
+}
+
+// offentlig API (IKKE static)
+void merge_sort_vec(vector<int>& A) {
+    if (A.size() <= 1) return;
+    mergeSortRec(A, 0, static_cast<int>(A.size()) - 1);
 }

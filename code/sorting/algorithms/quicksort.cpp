@@ -1,37 +1,37 @@
 #include <vector>
-#include <algorithm>
 #include <random>
+#include <algorithm>
+using namespace std;
 
-// Randomized Quick Sort using an initial shuffle of the array.
+static int partition(vector<int>& A, int p, int r) {
+    static random_device rd;
+    static mt19937 gen(rd());
+    uniform_int_distribution<int> dist(p, r);
+    int pivotIndex = dist(gen);
+    int pivot = A[pivotIndex];
+    swap(A[pivotIndex], A[r]);
 
-namespace {
-    int partition(std::vector<int>& arr, int low, int high) {
-        int pivot = arr[high];
-        int i = low - 1;
-        for (int j = low; j < high; ++j) {
-            if (arr[j] <= pivot) {
-                ++i;
-                std::swap(arr[i], arr[j]);
-            }
+    int i = p - 1;
+    for (int j = p; j < r; ++j) {
+        if (A[j] <= pivot) {
+            ++i;
+            swap(A[i], A[j]);
         }
-        std::swap(arr[i + 1], arr[high]);
-        return i + 1;
     }
+    swap(A[i + 1], A[r]);
+    return i + 1;
+}
 
-    void quicksort(std::vector<int>& arr, int low, int high) {
-        if (low < high) {
-            int pi = partition(arr, low, high);
-            quicksort(arr, low, pi - 1);
-            quicksort(arr, pi + 1, high);
-        }
+static void quickSortRec(vector<int>& A, int p, int r) {
+    if (p < r) {
+        int q = partition(A, p, r);
+        quickSortRec(A, p, q - 1);
+        quickSortRec(A, q + 1, r);
     }
 }
 
-std::vector<int> sortArray(std::vector<int>& arr) {
-    if (!arr.empty()) {
-        std::mt19937 rng(std::random_device{}());
-        std::shuffle(arr.begin(), arr.end(), rng);
-        quicksort(arr, 0, static_cast<int>(arr.size()) - 1);
-    }
-    return arr;
+// offentlig API (IKKE static)
+void quick_sort_vec(vector<int>& A) {
+    if (A.empty()) return;
+    quickSortRec(A, 0, static_cast<int>(A.size()) - 1);
 }
