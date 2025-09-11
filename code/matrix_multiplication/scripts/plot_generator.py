@@ -1,72 +1,75 @@
-import csv
-import sys
-from typing import Dict, List
-
+# code/scripts/matrix_plot.py
+import os
+import re
+import pandas as pd
 import matplotlib.pyplot as plt
 
+BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR  = os.path.normpath(os.path.join(BASE_DIR, "..", "data"))
+MEAS_DIR  = os.path.join(DATA_DIR, "measurements")
+PLOTS_DIR = os.path.join(DATA_DIR, "plots")
+os.makedirs(PLOTS_DIR, exist_ok=True)
 
-def read_timings(csv_path: str) -> (List[int], Dict[str, List[float]]):
-    """Read timing data from a CSV file.
+def read_meas(path):
+    fname = os.path.basename(path)
+    algo = re.sub(r"^matrix_", "", os.path.splitext(fname)[0])
+    df = pd.read_csv(path, sep=r"\s+", header=None)
+    # format: n time_ms mem_kB
+    if df.shape[1] >= 3:
+        df = df.iloc[:, :3]
+        df.columns = ["n", "time_ms", "memory_kB"]
+        df.insert(0, "algo", algo)
+        return df
+    raise ValueError(f"Unrecognized format in {fname}")
 
-    Parameters
-    ----------
-    csv_path: str
-        Path to a CSV file containing columns like
-        ``n,quick,merge,insertion,panda`` where ``n`` is the
-        input size and the remaining columns represent algorithm
-        runtimes.
+def main():
+    files = [os.path.join(MEAS_DIR, f) for f in os.listdir(MEAS_DIR)
+             if f.startswith("matrix_") and f.endswith(".txt")]
+    if not files:
+        print(f"[matrix_plot] no files like matrix_*.txt in {MEAS_DIR}")
+        return
 
-    Returns
-    -------
-    Tuple of ``n`` values and a mapping from algorithm name to a list
-    of runtimes.
-    """
-    sizes: List[int] = []
-    timings: Dict[str, List[float]] = {}
-    with open(csv_path, newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            sizes.append(int(row["n"]))
-            for key, value in row.items():
-                if key == "n":
-                    continue
-                timings.setdefault(key, []).append(float(value))
-    return sizes, timings
+    frames = []
+    for f in files:
+        try:
+            frames.append(read_meas(f))
+        except Exception as e:
+            print(f"[matrix_plot] skip {f}: {e}")
 
+    if not frames:
+        print("[matrix_plot] no valid data")
+        return
 
-def generate_plot(csv_path: str, output_path: str) -> None:
-    """Generate a PNG plot of algorithm runtimes.
+    df = pd.concat(frames, ignore_index=True)
 
-    Parameters
-    ----------
-    csv_path: str
-        Path to the CSV input file.
-    output_path: str
-        Path where the PNG file will be saved.
-    """
-    sizes, timings = read_timings(csv_path)
+    # median per (algo,n)
+    agg = df.groupby(["algo", "n"], as_index=False).median(numeric_only=True)
 
-    for name, values in timings.items():
-        plt.plot(sizes, values, label=name)
+    # per-algo
+    for algo, d in agg.groupby("algo"):
+        d = d.sort_values("n")
+        plt.figure(figsize=(7,5))
+        plt.plot(d["n"], d["time_ms"]/1000.0, marker="o", label="Runtime (s)")
+        plt.title(f"Matrix {algo} (median)")
+        plt.xlabel("n"); plt.ylabel("Runtime (s)")
+        plt.xscale("log"); plt.grid(True, which="both"); plt.legend()
+        plt.tight_layout()
+        out = os.path.join(PLOTS_DIR, f"matrix_{algo}.png")
+        plt.savefig(out); plt.close()
+        print(f"[matrix_plot] saved {out}")
 
-    plt.xlabel("Input size (n)")
-    plt.ylabel("Runtime (s)")
-    plt.title("Algorithm runtime comparison")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(output_path)
-    plt.close()
-
-
-def main(argv: List[str]) -> int:
-    if len(argv) != 3:
-        print("Usage: python plot_generator.py <timings.csv> <output.png>")
-        return 1
-
-    csv_path, output_path = argv[1], argv[2]
-    generate_plot(csv_path, output_path)
-    return 0
-
+    # compare
+    plt.figure(figsize=(7,5))
+    for algo, d in agg.groupby("algo"):
+        d = d.sort_values("n")
+        plt.plot(d["n"], d["time_ms"]/1000.0, marker="o", label=algo)
+    plt.title("Matrix multiplication runtime vs n (median)")
+    plt.xlabel("n"); plt.ylabel("Runtime (s)")
+    plt.xscale("log"); plt.grid(True, which="both"); plt.legend()
+    plt.tight_layout()
+    out_all = os.path.join(PLOTS_DIR, "matrix_runtime_vs_n.png")
+    plt.savefig(out_all); plt.close()
+    print(f"[matrix_plot] saved {out_all}")
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    main()

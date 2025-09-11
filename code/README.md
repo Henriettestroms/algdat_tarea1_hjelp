@@ -1,45 +1,59 @@
-## Estructura del Repositorio `INF-2025-1-TAREA-1`
+## README, how to run the code`INF-2025-1-TAREA-1`
 
-Este repositorio contiene la documentación, el código fuente y las instrucciones necesarias para la realización de la Tarea 1 de la asignatura *INF221 Algoritmos y Complejidad*.
+### Run the sorting algorithms:
 
-A continuación, se describe la estructura del repositorio:
+To run the sorting algorithms and plot the result, you must run the code from the sorting map.
 
 ```bash
-├── assignment_statement
-├── code
-├── report
-└── README.md
+\code\sorting
 ```
 
-### `assignment_statement`
-Contiene el enunciado de la tarea, así como los archivos fuente del enunciado en formato LaTeX (.tex).
+To remove old plots and files you run:
+```bash
+Remove-item .\data\plots\* -Force -Recurse -ErrorAction SilentlyContinue
 
-### `code`
-Contiene la plantilla de los archivos que deberán estar presentes en la entrega de la tarea. En ella, se deben implementar los algoritmos solicitados, los cuales se detallan a continuación:
-- `matrix_multiplication`: Algoritmo de Strassen y versión Naive.
-- `sorting`: std::sort, merge sort, quick sort, insertion sort y panda sort.
+Remove-item .\data\array_output\* -Force -Recurse -ErrorAction SilentlyContinue
 
-### `report`
-En esta carpeta se encuentra la plantilla en LaTeX para la elaboración del informe correspondiente a la tarea.
+Remove-item .\data\measurements\* -Force -Recurse -ErrorAction SilentlyContinue
+```
 
-***Para obtener información más detallada sobre el contenido de cada carpeta, se recomienda revisar los archivos README ubicados dentro de ellas.***
+To generate the array inputs: 
 
-# Documentación
+```Bash
+python .\scripts\array_generator.py
+```
 
-## Multiplicación de matrices
+Run the algorithms with all the datasets by running: 
 
-### Programa principal
-`matrix_multiplication.cpp` implementa el flujo principal para la multiplicación de matrices. El programa carga las matrices de entrada y decide qué algoritmo utilizar para el cálculo. Para el enfoque tradicional, se apoya en `naive.cpp`, mientras que para mejoras de rendimiento emplea la implementación de Strassen ubicada en `strassen.cpp`.
+```Bash
+$algos = "quick","merge","insertion","panda","stdsort"
+Get-ChildItem .\data\array_input\*.txt | Sort-Object Name | ForEach-Object {
+    $in = $_.FullName
+    foreach ($a in $algos) {
+        Get-Content $in -Raw | .\bin\sort.exe --algo=$a
+    }
+}
 
-### Scripts
-`matrix_generator.py` genera matrices de distintos tamaños y densidades para las pruebas. Otros scripts permiten automatizar la creación de casos de prueba y medir los tiempos de ejecución de cada algoritmo.
+```
+And lastley plot the plots: 
 
-## Ordenamiento de arreglo unidimensional
+```Bash
+python .\scripts\plot_generator.py
+```
+### Run the matrix algorithms
 
-### Programa principal
-`sorting.cpp` coordina la ejecución de los distintos algoritmos de ordenamiento, delegando el trabajo en módulos específicos como `insertionsort.cpp`, `mergesort.cpp`, `quicksort.cpp` y `pandasort.cpp`.
+To rin the matrix algorithms and plot the result you must run the code from the matrix_multiplication map.
 
-### Scripts
-`array_generator.py` crea arreglos de prueba con diversas configuraciones. Adicionalmente, hay scripts que recogen los tiempos de ejecución de cada método y generan gráficos comparativos a partir de esos datos.
+First (if needed), to remove old files you run:
 
+```Bash
+Remove-Item .\data\matrix_input\* -Force -ErrorAction SilentlyContinue
+Remove-Item .\data\matrix_output\* -Force -ErrorAction SilentlyContinue
+Remove-Item .\data\measurements\* -Force -ErrorAction SilentlyContinue
+```
+Then you run the powershell script:
+
+````Bash
+powershell -ExecutionPolicy Bypass -File .\run_all_mats.ps1
+````
 

@@ -3,6 +3,15 @@ import os
 import random
 from itertools import product
 
+
+
+# ✱ ENDRING 1: robust base-sti (uavhengig av cwd)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_OUT_DIR = os.path.normpath(os.path.join(BASE_DIR, "..", "data", "matrix_input"))
+
+os.makedirs("../data/matrix_input", exist_ok=True)
+os.makedirs("../data/matrix_output", exist_ok=True)
+
 def generar_matriz(n, tipo, dominio):
     """
     Genera una matriz de tamaño n x n según el tipo y dominio especificados.
@@ -28,24 +37,28 @@ def generar_matriz(n, tipo, dominio):
         for _ in range(cantidad):
             i = random.randint(0, n-1)
             j = random.randint(0, n-1)
+            # evita escribir 0 para mantener “dispersa” con entradas != 0
             matriz[i, j] = random.choice([v for v in valores if v != 0])
     else:
         raise ValueError("Tipo no válido. Usa 'densa', 'diagonal' o 'dispersa'.")
-    
     return matriz
 
 def guardar_matriz(matriz, nombre_archivo):
     """
     Guarda una matriz en un archivo de texto.
     """
+    # ✱ ENDRING 2: sørg for at mappen finnes
+    os.makedirs(os.path.dirname(nombre_archivo), exist_ok=True)
     with open(nombre_archivo, 'w') as f:
         for fila in matriz:
             f.write(' '.join(map(str, fila)) + '\n')
 
-def generar_y_guardar(n, t, d, m, carpeta="../data/matrix_input"):
+def generar_y_guardar(n, t, d, m, carpeta=DEFAULT_OUT_DIR):
     """
     Genera dos matrices y las guarda en archivos con nombres formateados.
     """
+    # ✱ ENDRING 3: sørg for at ut-mappen finnes
+    os.makedirs(carpeta, exist_ok=True)
 
     M1 = generar_matriz(n, t, d)
     M2 = generar_matriz(n, t, d)
@@ -60,7 +73,7 @@ def generar_y_guardar(n, t, d, m, carpeta="../data/matrix_input"):
     print(f"Archivos guardados: {archivo1}, {archivo2}")
 
 def generar_todos():
-    Ns = [2**4, 2**6, 2**8, 2**10]
+    Ns = [2**4, 2**6, 2**8,]   # 16, 64, 256, --> had to remove 1024, took way to long time
     Ts = ["dispersa", "diagonal", "densa"]
     Ds = ["D0", "D10"]
     Ms = ["a", "b", "c"]
@@ -69,7 +82,7 @@ def generar_todos():
     print(f"Generando {total * 2} archivos de matrices...")
 
     for n, t, d, m in product(Ns, Ts, Ds, Ms):
-        generar_y_guardar(n, t, d, m)
+        generar_y_guardar(n, t, d, m)  # usa DEFAULT_OUT_DIR por defecto
 
     print("Todas las matrices han sido generadas.")
 
